@@ -51,14 +51,15 @@ public class Main {
 		FANCY_RING_SETTING, RING_SETTING_TYPES, FANCY_RING_SETTING_GEMS,
 		CENTERPIECE, HALO_DECO, HALO_GEMSTONES, HALO_GEMSTONE_SHAPE, HALO_SHAPE,
 		HALO_DECO_MAYBE, HALO_COUNT, FILIGREE_MILGRAIN, FILIGREE_MILGRAIN2,
+		ENGRAVING, ENGRAVING_SUBJECT,
 		
 		SHAPE, GEOM_SHAPE, ORGANIC_SHAPE, QUALITY,
 		
 		SIMPLE_COUNTS, COUNT_EXACT_ONE_TO_FIVE, COUNT_EXACT_SIX_TO_TEN, COUNT_EXACT_TEN_TO_FIFTEEN,
 		
-		DEITY, INFLUENCE_SPHERES,
+		DEITY, INFLUENCE_SPHERES, HEAD_MAYBE, DEITY_NAME,
 		
-		BIG_ANIMALS,
+		BIG_ANIMALS, BIRDS, CREATURE
 		
 		
 	}
@@ -243,8 +244,8 @@ public class Main {
 		
 		 g.rule(PENDANT).pushNode("pendant")
 		             .produces(RULE_NONE)
-		             .produces(RING_SETTING).weight(ctx->.2+ctx.wealth*5)
-		             .produces(COMMON_BEADS).weight(ctx->(1.-ctx.wealth)*2);
+		             .produces(RING_SETTING).weight(ctx->.2+ctx.wealth)
+		             .produces(ENGRAVING);
 		
 		 g.rule(MATERIAL)
 		        .pushNode("material")
@@ -269,6 +270,16 @@ public class Main {
 		g.rule(SEMI_PRECIOUS_G).producesOneOf(AMETHYST, TURQUOISE, TOPAZ, PERIDOT, JADE, GARNET, ROSE_QUARTZ, OPAL,
 		        PEARL, BLACK_ONYX, AQUAMARINE, AMBER, JET);
 		
+		g.rule(ENGRAVING).pushNode("engraving")
+		    .produces(MATERIAL, ENGRAVING_SUBJECT);
+		
+		g.rule(ENGRAVING_SUBJECT).pushNode("subject")
+		    .produces("engraving_creature")
+		    .produces(DEITY)
+		;
+		
+		g.rule("engraving_creature").pushNode("creature").produces(CREATURE);
+		
 		g.rule(FX)
 		    .produces(RULE_NONE)
 		    .produces(GLOW).condition(ctx->ctx.occu==MAGICIAN);
@@ -280,9 +291,36 @@ public class Main {
 		g.rule(GLOW_TYPE).pushNode("type").producesOneOf("faint", "barely perceiptible", BEAUTIFUL, HEAVENLY, GLOOMY, EVIL);
 
 		
-		g.rule(INFLUENCE_SPHERES).produces("harvest", "home", "war", "courage", "river", "sea",
-		                                   "mountain", "earth", "love", "passion")
+		g.rule(INFLUENCE_SPHERES).pushNode("sphere")
+		    .producesOneOf("harvest", "home", "war", "courage", "river", "sea",
+                           "mountain", "earth", "love", "passion", "wine", "happiness",
+                           "mischief")
 		;
+		
+		g.rule(BIG_ANIMALS).producesOneOf("tiger", "lion", "jackal", "wolf", "bison", "ox", "cow", "elephant", "seal",
+		                                   "leopard", "horse", "cheetah", "bear")
+		;
+		
+		g.rule(BIRDS).producesOneOf("hawk", "eagle", "heron", "falcon", "peacock", "dove", "pigeon", 
+		        "stork", "parrot", "cockatiel", "emu", "swallow")
+		;
+		
+		g.rule(CREATURE).producesOneOf(BIG_ANIMALS, BIRDS);
+		
+		g.rule(DEITY).pushNode("deity")
+		    .produces(DEITY_NAME, HEAD_MAYBE, INFLUENCE_SPHERES)// TODO: blessed creature should be generated here, but cannot with the features right now.
+		;
+		
+		g.rule(DEITY_NAME)
+          .pushNode("name")
+          .producesRunTimeName(
+              ctx->CVC.getCVC(ctx.rand, 5))// hack, producing leaf here
+           ;
+		
+		g.rule(HEAD_MAYBE).pushNode("head")
+	                .produces(RULE_NONE)/*.weight(2)*/
+		            .produces(CREATURE)
+		            ;
 		
 		// TODO: use Orthogonal concerns to specify what is expensive, what is cheap, what is more likely what is less.
 		
@@ -334,15 +372,41 @@ public class Main {
 		                        .param(1).property("type")
 		                        .param(2).property("color");
 		
-		g.template(NECKLACE).str("The necklace is #1#2.")
+		g.template(NECKLACE).str("The necklace is #1#2.#3")
 		            .param(1).property("chain/material").useTemplate(CHAIN)
-		            .param(2).property("chain").ifExists("chain/beads").useTemplate(STRUNG_BEADS);
+		            .param(2).property("chain").ifExists("chain/beads").useTemplate(STRUNG_BEADS)
+		            .param(3).property("pendant").useTemplate(PENDANT);
 		
 		g.template(CHAIN).str("a chain of #0");
 		
 		g.template(STRUNG_BEADS).str("a strand of #1 beads").param(1).property("beads").unique();
 		
-//		g.template(CROWN).str("A crown.");
+		g.template(PENDANT).str(" The #3pendant is #1#2.")
+		    .param(1).property("").ifExists("setting").useTemplate("pendant_setting")
+		    .param(2).property("engraving").useTemplate(ENGRAVING)
+		    .param(3).property("engraving/material").spaceAfter()
+		    ;
+		
+		g.template("pendant_setting").str("set with #1")
+		    .param(1).property("setting").unique().plural()
+		;
+		
+		g.template(ENGRAVING).str("engraved with the image of #1#2, ")
+		    .param(1).property("subject").ifExists("subject/deity").useTemplate(DEITY)
+		    .param(2).property("subject/creature").uniqueCounted(); // provides a/an
+		
+		g.template(DEITY).str("#3 #1god of #2")
+		    .param(1).property("deity/head").useTemplate("god_head")
+		    .param(2).property("deity/sphere")
+		    .param(3).property("deity/name").capFirst()
+		    ;
+		
+		g.template("god_head").str("#0-headed ");
+		
+		g.template(CROWN).str(""/*"A crown."*/);
+		
+		//---------------------------------------------------------------------------------------
+		
 		
 	      g.sanityCheck(PERSON);
 	        
