@@ -27,20 +27,31 @@ public class Grammar<T extends Context>
     
     Map<Object, Rule<T>> allRules = new HashMap<>();
 
-    T context;
+//    T context;
 
-    public Stack<Rule<T>> curRule = new Stack<>();
-
-    public Stack<String> nodes = new Stack<>();
-    public Stack<FlexObject> objects = new Stack<>();
-    
-    public Random rand;
     // TODO above should not be public, move them into Context
     // Fix: put these in a context object. The object itself will be hidden.
     
     public Grammar(T context)
     {
         this(System.currentTimeMillis(), context);
+    }
+    
+    public void newContext(T ctx)
+    {
+        newContext(ctx, System.currentTimeMillis());
+    }
+    public void newContext(T ctx, long seed)
+    {
+//        context = ctx;
+        if (ctx.rand == null)
+            ctx.rand = new Random(seed);
+        ctx.root = FlexObject.createRoot();
+        
+        ctx.objects.clear();
+        ctx.nodes.clear();
+        
+        ctx.objects.push(ctx.root);
     }
     
     public static <T extends Context> Grammar<T> create(T ctx)
@@ -50,9 +61,8 @@ public class Grammar<T extends Context>
     
     public Grammar(long seed, T context)
     {
-        rand = new Random(seed);
-        objects.push(context.root);
-        this.context = context;
+        newContext(context, seed);
+//        this.context = context;
     }
     
     public Rule<T> rule(Object name)
@@ -66,7 +76,7 @@ public class Grammar<T extends Context>
         return rr;
     };
     
-    public MultiRule forAllRules(Object... names){
+    public MultiRule<T> forAllRules(Object... names){
         Rule<T>[] rules = new Rule[names.length];
         for (int i = 0; i < names.length; i++)
         {
@@ -74,7 +84,7 @@ public class Grammar<T extends Context>
             rules[i] = rule(name);
         }
         
-        return new MultiRule(rules);
+        return new MultiRule<T>(rules);
     }
     
     public Template template(Object name)
@@ -88,7 +98,7 @@ public class Grammar<T extends Context>
         return t;
     }
     
-    public String toString(FlexObject root, Object templateName)
+    public String toString(T context, Object templateName)
     {
 //        StringBuilder sb = new StringBuilder();
         
@@ -97,7 +107,7 @@ public class Grammar<T extends Context>
             System.err.println("Template "+templateName+" not found.");
             return "";
         }
-        String s = template(templateName).toString(root);
+        String s = template(templateName).toString(context, context.root);
         
         return s;
     }
@@ -111,8 +121,9 @@ public class Grammar<T extends Context>
         {
             if (rule.name == RULE_NONE)
                 continue;
-            if (rule.getProductions().isEmpty() && rule.getProperties().isEmpty())
-                System.err.println(rule.name+" does not have any productions.");
+            // rules not doing anything produce self.
+//            if (rule.getProductions().isEmpty() && rule.getProperties().isEmpty())
+//                System.err.println(rule.name+" does not have any productions.");
         }
         
         if (!rule(RULE_NONE).getProductions().isEmpty())

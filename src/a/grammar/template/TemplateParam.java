@@ -1,5 +1,7 @@
 package a.grammar.template;
 
+import a.grammar.Context;
+import a.grammar.common.ActionProduceRulename;
 import a.grammar.template.Template.HandleUnique;
 
 public class TemplateParam extends TemplateConditional
@@ -8,14 +10,23 @@ public class TemplateParam extends TemplateConditional
     int idx;
     
     String property;
+    ActionProduceRulename<Context> runTimeValue;// TODO parameter
     
     Object templName;
-    
     String delimiter;
     boolean multi;
     
     HandleUnique handleUnique = HandleUnique.NORMAL;
     boolean plural;
+    
+    static enum GenderType{
+        SUBJECTIVE, OBJECTIVE, POSSESSIVE
+    }
+    
+    GenderType gender;
+
+    boolean capFirst = false;
+    boolean spaceBefore = false, spaceAfter = false;
     
     public TemplateParam(int idx, Template parent)
     {
@@ -27,6 +38,12 @@ public class TemplateParam extends TemplateConditional
     public TemplateParam property(String property)
     {
         this.property = property;
+        return this;
+    }
+    
+    public TemplateParam runtimeValue(ActionProduceRulename<Context> runTimeValue)
+    {
+        this.runTimeValue = runTimeValue;
         return this;
     }
     
@@ -71,6 +88,24 @@ public class TemplateParam extends TemplateConditional
         return this;
     }
     
+    public TemplateParam genderSubjective()
+    {
+        gender = GenderType.SUBJECTIVE;
+        return this;
+    }
+    
+    public TemplateParam genderObjective()
+    {
+        gender = GenderType.OBJECTIVE;
+        return this;
+    }
+    
+    public TemplateParam genderPossessive()
+    {
+        gender = GenderType.POSSESSIVE;
+        return this;
+    }
+    
     @Override
     public TemplateParam ifExists(String propertyName)
     {
@@ -87,5 +122,23 @@ public class TemplateParam extends TemplateConditional
     public String toString()
     {
         return "Param("+parent.name+"/"+property+")";
+    }
+
+    public TemplateParam capFirst()
+    {
+        capFirst = true;
+        return this;
+    }
+
+    public TemplateParam spaceBefore()
+    {
+        this.spaceBefore = true;
+        return this;
+    }
+
+    public TemplateParam spaceAfter()
+    {
+        this.spaceAfter = true;
+        return this;
     }
 }

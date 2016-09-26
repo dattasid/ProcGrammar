@@ -21,7 +21,7 @@ public class Plural
     // TODO user created special cases
     public String plural(String word1)
     {
-        String word = word1.toLowerCase();
+        String word = word1;//.toLowerCase();
         if (word == null || word.length() == 0)
             return "";
         if (word.length() == 1)
@@ -54,9 +54,9 @@ public class Plural
         return word1+"s";
     }
     
-    private static boolean isVowel(char c)
+    public static boolean isVowel(char c)
     {
-        if (vowels.indexOf(c) < 0)
+        if (vowels.indexOf(Character.toLowerCase(c)) < 0)
             return false;
         return true;
     }

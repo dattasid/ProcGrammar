@@ -12,11 +12,32 @@ import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 // Can insert any property
 public class FlexObject
 {
+    public final FlexObject parent, root;
+    
     Map<String, List<Object>> map = new HashMap<>();
     
+    public static FlexObject createRoot()
+    {
+        return new FlexObject();
+    }
+    
+    protected FlexObject()// ROOT
+    {
+        super();
+        this.parent = this;
+        this.root = this;
+    }
+    
+    public FlexObject(FlexObject root, FlexObject parent)
+    {
+        super();
+        this.parent = parent;
+        this.root = root;
+    }
+
     public FlexObject addProperty(String name)
     {
-        FlexObject o = new FlexObject();
+        FlexObject o = new FlexObject(root, this);
         List<Object> lst = map.get(name);
         if (lst == null)
         {

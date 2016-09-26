@@ -2,12 +2,17 @@ package a.grammar.template;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import a.grammar.Context;
 import a.grammar.Grammar;
 import a.grammar.common.FlexObject;
+import a.grammar.template.TemplateParam.GenderType;
+import a.grammar.utils.CVC;
+import a.grammar.utils.Plural;
 
 public class Template
 {
@@ -81,7 +86,7 @@ public class Template
         return td;
     }
     
-    public String toString(Object obj)
+    public String toString(Context ctx, Object obj)// TODO parameterize context
     {
         if (!delegates.isEmpty())
         {
@@ -95,12 +100,18 @@ public class Template
                         System.err.println("Delegate template "+dd.delegateName+" not found from template "+name);
                     }
                     
-                    return td.toString(obj);
+                    return td.toString(ctx, obj);
                 }
             }
         }
         
         String s = templStr;
+        
+        if (s == null)
+        {
+            System.err.println("In template "+name+". No template string set up, and no delegates.");
+            return "";
+        }
         
         if (!(obj instanceof FlexObject))
         {
@@ -108,7 +119,7 @@ public class Template
             {
                 if (obj instanceof List)
                 {
-                    String itemsStr = list2Str((List) obj, null, HandleUnique.NORMAL, false);
+                    String itemsStr = list2Str((List) obj, null, HandleUnique.NORMAL, false, null);
                     s = s.replaceAll("#0", itemsStr);
                 }
                 else
@@ -124,7 +135,7 @@ public class Template
         if (s.contains("#0"))
         {
             List<Object> items = root.getDeepProperty("/");
-            String itemsStr = list2Str(items, null, HandleUnique.NORMAL, false);
+            String itemsStr = list2Str(items, null, HandleUnique.NORMAL, false, null);
             s = s.replaceAll("#0", itemsStr);
         }
         
@@ -137,9 +148,26 @@ public class Template
                     s = s.replaceAll("#"+param.idx, "");
                     continue;
                 }
-                String propName = param.property;
+                List<Object> items;
                 
-                List<Object> items = root.getDeepProperty(propName);
+                if (param.property != null)
+                {
+                    items = root.getDeepProperty(param.property);
+                }
+                else if (param.runTimeValue != null)
+                {
+                    Object oo = param.runTimeValue.act(ctx);
+                    if (oo instanceof List)
+                        items = (List<Object>) oo;
+                    else
+                        items = wrapList(oo);
+                }
+                else
+                {
+                    System.err.println("Template "+name+" did not have a property or runtimevalue, ignoring!");
+                    continue;
+                }
+                
 //                System.out.println("Items "+propName+"="+items);
                 String itemsStr = "";
                 
@@ -154,24 +182,34 @@ public class Template
                     
                     if (param.multi)
                     {
-                        itemsStr = t.toString(items);
+                        itemsStr = t.toString(ctx, items);
                     }
                     else
                     {
                         List<String> strs = new ArrayList<>();
                         for (Object item : items)
                         {
-                            String s2 = t.toString(item);
+                            String s2 = t.toString(ctx, item);
                             strs.add(s2);
                         }
                         
-                        itemsStr = list2Str(strs, param.delimiter, param.handleUnique, param.plural);
+                        itemsStr = list2Str(strs, param.delimiter, param.handleUnique, param.plural, param.gender);
                     }
                 }
                 else
                 {
-                    itemsStr = list2Str(items, param.delimiter, param.handleUnique, param.plural);
+                    itemsStr = list2Str(items, param.delimiter, param.handleUnique, param.plural,
+                            param.gender);
                 }
+                
+                if (param.capFirst)
+                    itemsStr = CVC.capFirst(itemsStr);
+                
+                if (param.spaceBefore)
+                    itemsStr = " "+itemsStr;
+                
+                if (param.spaceAfter)
+                    itemsStr = itemsStr+" ";
                 
                 s = s.replaceAll("#"+param.idx, itemsStr);
             }
@@ -182,8 +220,15 @@ public class Template
     }
 
     boolean sanitize = true;
+    static HashSet<String> male = new HashSet<String>(), female = new HashSet<String>();
+    {
+        male.add("male");male.add("m");
+        female.add("female");female.add("f");
+    }
+    static String heStr[] = new String[] {"he", "him", "his"};
+    static String sheStr[] = new String[] {"she", "her", "her"};
     private String list2Str(List<? extends Object> items, String delim,
-            HandleUnique hdlUniq, boolean plural)
+            HandleUnique hdlUniq, boolean plural, GenderType gender)
     {
         if (items.isEmpty())
             return "";
@@ -192,9 +237,23 @@ public class Template
         List<String> items1 = new ArrayList<>();
         for (Object it : items)
         {
-            String ss = sani(it);
-            
-            items1.add(ss);
+            if (gender != null)
+            {
+                String ss = it.toString().toLowerCase();
+                if (male.contains(ss))
+                    ss = heStr[gender.ordinal()];
+                else if (female.contains(ss))
+                    ss = sheStr[gender.ordinal()];
+                // else ss stays same
+                
+                items1.add(ss);
+            }
+            else
+            {
+                String ss = sani(it);
+                
+                items1.add(ss);
+            }
         }
 
         if (hdlUniq != HandleUnique.NORMAL)
@@ -214,12 +273,13 @@ public class Template
             for (Entry<String, Integer> e : ct.entrySet())
             {
                 String ss = e.getKey();
-                if (plural && e.getValue() > 1)
+                if (plural && (e.getValue() > 1 ||
+                            hdlUniq == HandleUnique.UNIQUE/*force plurals*/))
                     ss = parent.plural.plural(ss);
                 
                 if (hdlUniq == HandleUnique.UNIQUE_COUNTED)
                 {
-                    items1.add(getCount(e.getValue())+" "+ss);
+                    items1.add(getCount(e.getValue(), ss)+" "+ss);
                 }
                 else
                 {
@@ -249,14 +309,21 @@ public class Template
         return sb.toString();
     }
     
-    private static String getCount(int ct)
+    private static String getCount(int ct, String obj)
     {
-        if (ct < counts_len - 1)
+        if (ct == 1)
+        {
+            if (Plural.isVowel(obj.charAt(0)))
+                return "an";
+            else
+                return "a";
+        }
+        else if (ct < counts_len - 1)
             return counts[ct];
         else return counts[counts_len - 1];
     }
     
-    static final String counts[] = new String[] { "", "a", "two", "three", "four", "five", "six", "seven", "eight",
+    static final String counts[] = new String[] { "", "one", "two", "three", "four", "five", "six", "seven", "eight",
             "nine", "ten", "many" };
     static final int counts_len = counts.length;
     
@@ -265,5 +332,12 @@ public class Template
         if (!sanitize || !(in instanceof Enum))
             return in.toString();
         return in.toString().toLowerCase().replaceAll("_", " ");
+    }
+    
+    private static List<Object> wrapList(Object o)
+    {
+        ArrayList<Object> l = new ArrayList<Object>(1);
+        l.add(o);
+        return l;
     }
 }

@@ -36,13 +36,13 @@ public class MyContext extends Context
         return this;
     }
 
-    public String toString()
-    {
-        // return "Name is "+"TODO!!";
-
-        return up1lowall(gender.pronoun1 + " is wearing " + list2stringwCount(jewelery)) + ".\n\n"
-                + up1lowall(gender.pronoun1 + " is a " + occu + ".");
-    }
+//    public String toString()
+//    {
+//        // return "Name is "+"TODO!!";
+//
+//        return up1lowall(gender.pronoun1 + " is wearing " + list2stringwCount(jewelery)) + ".\n\n"
+//                + up1lowall(gender.pronoun1 + " is a " + occu + ".");
+//    }
 
     private static String RNtoStr(RuleName rn)
     {

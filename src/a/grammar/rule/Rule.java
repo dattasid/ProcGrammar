@@ -10,7 +10,9 @@ import java.util.Random;
 import a.grammar.Context;
 import a.grammar.Grammar;
 import a.grammar.common.Action;
+import a.grammar.common.ActionProduceRulename;
 import a.grammar.common.Count;
+import a.grammar.common.FixedWeight;
 import a.grammar.common.FlexObject;
 import a.grammar.util.CalculateDouble;
 
@@ -51,21 +53,30 @@ public class Rule<T extends Context>
         return sp;
     }
     
-    public Rule<T> producesOneOf(Object... ruleNames)
+    public MultiProduction<T> producesOneOf(Object... ruleNames)
     {
+        MultiProduction<T> mp = new MultiProduction<>();
         for (Object rn : ruleNames)
         {
             SequenceProduction<T> sp = new SequenceProduction<T>(this, rn);
             productions.add(sp);
+            mp.add(sp);
         }
-        return this;
+        return mp;
     }
     
-    public Production<T> produces(Action<T> act)
+    public Production<T> producesAction(Action<T> act)
     {
         SequenceProduction<T> p = new SequenceProduction<T>(this);
-        ActionStep<T> s = new ActionStep<T>(p, act);
-        p.then(s);
+        p.thenAction(act);
+        productions.add(p);
+        return p;
+    }
+    
+    public Production<T> producesRunTimeName(ActionProduceRulename<T> act)
+    {
+        SequenceProduction<T> p = new SequenceProduction<T>(this);
+        p.thenRunTimeName(act);
         productions.add(p);
         return p;
     }
@@ -106,24 +117,30 @@ public class Rule<T extends Context>
     }
     public void fire(T ctx)
     {
+//        System.out.println("firing "+name+" "+ctx.root);
+//        System.out.println(((Object)ctx).toString());
         int len = productions.size();
         
         if (len == 0 && properties.size() == 0)
         {
             if (name != RULE_NONE)
-                System.err.println("Rule "+name+" did not have any production rules.");
+            {
+//                System.out.println("Rule "+name+" did not have any production rules, returns self");
+                
+                pushLeaf(RULENAME_INDICATOR);
+            }
             
-            return;
+//            return;
         }
 
-        parent.curRule.push(this);
+        ctx.curRule.push(this);
 //      System.out.println("--------------"+name+" "+pushName+" "+properties);
 
         if (pushName != null)
         {
-            parent.nodes.push(pushName);
-            FlexObject o = parent.objects.peek().addProperty(pushName);
-            parent.objects.push(o);
+            ctx.nodes.push(pushName);
+            FlexObject o = ctx.objects.peek().addProperty(pushName);
+            ctx.objects.push(o);
         }
             
         if (properties.size() > 0)
@@ -134,7 +151,7 @@ public class Rule<T extends Context>
                 if (thisleaf == RULENAME_INDICATOR)
                     thisleaf = name;
 //                System.out.println("---------------- Adding "+lf.name+"/"+thisleaf+" to "+ctx.objects.peek());
-                parent.objects.peek().addLeaf(lf.name, thisleaf);
+                ctx.objects.peek().addLeaf(lf.name, thisleaf);
             }
         }
         
@@ -149,7 +166,7 @@ public class Rule<T extends Context>
             
             if (!fireMany)
             {
-                int choice = choose(parent.rand, pweights);
+                int choice = choose(ctx.rand, pweights);
                 Production<T> pc = productions.get(choice);
                 
 //              System.out.println("Rule "+name+" -> production "+choice+" "+pc);
@@ -163,7 +180,7 @@ public class Rule<T extends Context>
                 
                 int numRolls = min;
                 if (max > min)
-                    numRolls = min + parent.rand.nextInt(max - min);
+                    numRolls = min + ctx.rand.nextInt(max - min);
 //                System.out.println("MM "+min+" "+max+" -- "+numRolls);
                 
                 for (int i = 0; i < numRolls; i++)
@@ -192,12 +209,12 @@ public class Rule<T extends Context>
                     
                     int numRolls = min;
                     if (max > min)
-                        numRolls = min + parent.rand.nextInt(max - min);
+                        numRolls = min + ctx.rand.nextInt(max - min);
 //                  System.out.println("MM "+min+" "+max+" -- "+numRolls);
                     
                     for (int j = 0; j < numRolls; j++)
                     {
-                        double roll = parent.rand.nextDouble();
+                        double roll = ctx.rand.nextDouble();
                         
                         sucList.add(new ProdChance<T>(roll/pweights[i], prod));
                     }
@@ -239,14 +256,14 @@ public class Rule<T extends Context>
         
         if (pushName != null)
         {
-            if (parent.nodes.peek() != pushName)
-                System.err.println("Top of the nodes stack is not expected! Expected "+pushName+" found "+parent.nodes.peek());
+            if (ctx.nodes.peek() != pushName)
+                System.err.println("Top of the nodes stack is not expected! Expected "+pushName+" found "+ctx.nodes.peek());
             else
             {
-                parent.nodes.pop();
-                FlexObject lastTop = parent.objects.pop();
+                ctx.nodes.pop();
+                FlexObject lastTop = ctx.objects.pop();
                 // pack
-                FlexObject curTop = parent.objects.peek();
+                FlexObject curTop = ctx.objects.peek();
                 List<Object> lst = lastTop.getProperty(LEAFPROP_INDICATOR);
                 lastTop.removeAll(LEAFPROP_INDICATOR);
                 if (lastTop.isEmpty())
@@ -260,10 +277,10 @@ public class Rule<T extends Context>
                 }
             }
         }           
-        if (parent.curRule.peek() != this)
-            System.err.println("Top of the rule stack is not this! Expected "+name+" found "+parent.curRule.peek().name);
+        if (ctx.curRule.peek() != this)
+            System.err.println("Top of the rule stack is not this! Expected "+name+" found "+ctx.curRule.peek().name);
         else
-            parent.curRule.pop();
+            ctx.curRule.pop();
     }       
     /**
      * Weights will now modify the chance.

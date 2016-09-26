@@ -1,11 +1,13 @@
-package a.grammar.rule;
+package a.grammar.common;
 
 import a.grammar.Context;
+import a.grammar.rule.Production;
+import a.grammar.rule.Weight;
 
 public class FixedWeight extends Weight
 {
     final double w;
-    static final FixedWeight DefaultWeight = new FixedWeight(null, 1);
+    public static final FixedWeight DefaultWeight = new FixedWeight(null, 1);
     
     public FixedWeight(Production parent, double w) {
         super(parent);

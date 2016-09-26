@@ -3,7 +3,9 @@ package a.grammar.rule;
 import a.grammar.Context;
 import a.grammar.common.Action;
 import a.grammar.common.ActionCount;
+import a.grammar.common.ActionProduceRulename;
 import a.grammar.common.FixedCount;
+import a.grammar.common.FixedWeight;
 import a.grammar.util.CalculateBool;
 import a.grammar.util.CalculateDouble;
 import a.grammar.util.CalculateInt;
@@ -45,12 +47,16 @@ public abstract class Production<T extends Context>
     {
         return parent.produces(ruleNames); 
     }
-    public Production<T> produces(Action<T> act)
+    public Production<T> producesAction(Action<T> act)
     {
-        return parent.produces(act); 
+        return parent.producesAction(act); 
+    }
+    public Production<T> producesRunTimeName(ActionProduceRulename<T> act)
+    {
+        return parent.producesRunTimeName(act); 
     }
     
-    public Rule<T> producesOneOf(Object... ruleNames)
+    public MultiProduction<T> producesOneOf(Object... ruleNames)
     {
         return parent.producesOneOf(ruleNames); 
     }
@@ -70,5 +76,5 @@ public abstract class Production<T extends Context>
     public abstract void fire(T ctx);
     
     public abstract Production<T> then(Object... ruleNames);
-    public abstract Production<T> then(Action<T> act);
+    public abstract Production<T> thenAction(Action<T> act);
 }
