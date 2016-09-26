@@ -1,6 +1,8 @@
 package a.grammar.utils;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class Plural
@@ -9,6 +11,7 @@ public class Plural
     static final String vowels = "aeiou";
     static final Set<String> es2 = new HashSet<>();
     static final Set<String> es1 = new HashSet<>();
+    static final Map<String, String> exceptions = new HashMap<>();
     static
     {
          es2.add("ch");
@@ -17,6 +20,11 @@ public class Plural
          es1.add("s");
          es1.add("x");
          es1.add("z");
+         
+         exceptions.put("man", "men");
+         exceptions.put("woman", "women");
+         exceptions.put("child", "children");
+         exceptions.put("ox", "oxen");
     }
     // TODO user created special cases
     public String plural(String word1)
@@ -26,6 +34,10 @@ public class Plural
             return "";
         if (word.length() == 1)
             return word1+"s";
+     
+        String pl1 = exceptions.get(word);
+        if (pl1 != null)
+            return pl1;
         
         int l = word.length();
         char c2 = word.charAt(l - 1);
