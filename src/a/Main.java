@@ -391,11 +391,11 @@ public class Main {
 		    .param(1).property("setting").unique().plural()
 		;
 		
-		g.template(ENGRAVING).str("engraved with the image of #1#2, ")
+		g.template(ENGRAVING).str("engraved with the image of #1#2")
 		    .param(1).property("subject").ifExists("subject/deity").useTemplate(DEITY)
 		    .param(2).property("subject/creature").uniqueCounted(); // provides a/an
 		
-		g.template(DEITY).str("#3 #1god of #2")
+		g.template(DEITY).str("#3 the #1god of #2")
 		    .param(1).property("deity/head").useTemplate("god_head")
 		    .param(2).property("deity/sphere")
 		    .param(3).property("deity/name").capFirst()
@@ -410,7 +410,7 @@ public class Main {
 		
 	      g.sanityCheck(PERSON);
 	        
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 100; i++)
         {
             context = new MyContext();
             g.newContext(context, System.nanoTime());
