@@ -23,7 +23,7 @@ public class TemplateConditional
     {
         if (this.conditionPropertyName != null)
         {
-            System.err.println("Deletegate for "+parent.name+", condition property was already set!");
+            System.out.println("ERROR! Deletegate for "+parent.name+", condition property was already set!");
         }
         this.conditionPropertyName = propertyName;
         isExistsCheck = true;
@@ -34,7 +34,7 @@ public class TemplateConditional
     {
         if (this.conditionPropertyName != null)
         {
-            System.err.println("Deletegate for "+parent.name+", condition property was already set!");
+            System.out.println("ERROR! Deletegate for "+parent.name+", condition property was already set!");
         }
         this.conditionPropertyName = propertyName;
         this.expected = expected;
@@ -51,7 +51,7 @@ public class TemplateConditional
     {
         if (conditionPropertyName == null)
         {
-            System.err.println("Deletegate for "+parent.name+", condition not set up!");
+            System.out.println("ERROR! Deletegate for "+parent.name+", condition not set up!");
             return false;
         }
         if (obj == null)
@@ -61,7 +61,7 @@ public class TemplateConditional
         {
             if (!"".equals(conditionPropertyName) && !"/".equals(conditionPropertyName))
             {
-                System.err.println("Warning: Could not match plain object against check in "+toString());
+                System.out.println("Warning: Could not match plain object against check in "+toString());
             }
             
             if (isExistsCheck)

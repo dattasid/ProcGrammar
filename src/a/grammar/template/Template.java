@@ -57,19 +57,19 @@ public class Template
     {
         if (templStr == null)
         {
-            System.err.println("Template str() must be called before param().");
+            System.out.println("ERROR! Template str() must be called before param().");
             return badParam;
         }
         
         if (idx == 0)
         {
-            System.err.println("Cannot override parameter idx 0.");
+            System.out.println("ERROR! Cannot override parameter idx 0.");
             return badParam;
         }
         
         if (!templStr.contains("#"+idx))
         {
-            System.err.println("Parameter #"+idx+" not found in template string \""+templStr+"\".");
+            System.out.println("ERROR! Parameter #"+idx+" not found in template string \""+templStr+"\".");
             return badParam;
         }
         
@@ -97,7 +97,7 @@ public class Template
                     Template td = parent.template(dd.delegateName);
                     if (td == null)
                     {
-                        System.err.println("Delegate template "+dd.delegateName+" not found from template "+name);
+                        System.out.println("ERROR! Delegate template "+dd.delegateName+" not found from template "+name);
                     }
                     
                     return td.toString(ctx, obj);
@@ -109,7 +109,7 @@ public class Template
         
         if (s == null)
         {
-            System.err.println("In template "+name+". No template string set up, and no delegates.");
+            System.out.println("ERROR! In template "+name+". No template string set up, and no delegates.");
             return "";
         }
         
@@ -126,7 +126,7 @@ public class Template
                     s = s.replaceAll("#0", sani(obj));
             }
             if (!params.isEmpty())
-                System.err.println("Warning: Could not apply parameters to plain object in template "+name+" obj "+obj);
+                System.out.println("Warning: Could not apply parameters to plain object in template "+name+" obj "+obj);
             return s;
         }
         
@@ -164,7 +164,7 @@ public class Template
                 }
                 else
                 {
-                    System.err.println("Template "+name+" did not have a property or runtimevalue, ignoring!");
+                    System.out.println("ERROR! Template "+name+" did not have a property or runtimevalue, ignoring!");
                     continue;
                 }
                 
@@ -176,7 +176,7 @@ public class Template
                     Template t = parent.template(param.templName);
                     if (t == null)
                     {
-                        System.err.println("In template "+name+" param "+param.idx+", target template "+param.templName+" was not found.");
+                        System.out.println("ERROR! In template "+name+" param "+param.idx+", target template "+param.templName+" was not found.");
                         continue;
                     }
                     
