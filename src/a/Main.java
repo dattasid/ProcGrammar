@@ -80,17 +80,17 @@ public class Main {
   
  }
  
- static enum Occupation {
+ public static enum Occupation {
   RULER, NOBLE, MERCHANT, MAGICIAN, FARMER, LUMBERJACK, SAILOR, FISHERMAN
  }
  
  // TODO!! calculators get a immutable context.
  
 
- public static void main(String[] args) {
-  MyContext context = new MyContext();
+ public static Grammar<MyContext> build() {
+     MyContext context = new MyContext();
      Grammar<MyContext> g = Grammar.create(context);
-     
+
   g.rule(PERSON)
    .produces(GENDER, OCCUPATION, WEALTH, "name", ALL_JEWELLERIES);
   
@@ -372,7 +372,7 @@ public class Main {
   
   g.rule(THINGS)
           .produces(WEAPONS)
-          .producesOneOf("castle", "fortress", "tree", "forest", "temple", "river", "mountain");
+          .producesOneOf("castle", "fortress", "tree", "forest", "temple", "river", "mountain", "the sky", "the sea");
                 
   g.rule(ALL_MOTIFS).produces(CREATURE).produces(THINGS);
   
@@ -469,7 +469,7 @@ public class Main {
       .param(1).property("setting").unique().plural()
   ;
   
-  g.template(ENGRAVING).str("engraved with the image of #1")
+  g.template(ENGRAVING).str("engraved with an image of #1")
       .param(1).property("subject").useTemplate("motifs");
 //      ifExists("subject/deity").useTemplate(DEITY)
 //      .param(2).property("subject/thing").uniqueCounted().plural(); // provides a/an
@@ -498,13 +498,16 @@ public class Main {
   
   //---------------------------------------------------------------------------------------
   
-  
+  return g;
+ }
+  public static void main(String[] args) {
+       Grammar<MyContext> g = build();
        g.sanityCheck(PERSON);
          
         for (int i = 0; i < 100; i++)
         {
-            context = new MyContext();
-            g.newContext(context, System.nanoTime());
+            MyContext context = new MyContext();
+            g.newContext(context, System.currentTimeMillis());
             
             g.rule(PERSON).fire(context);
             
