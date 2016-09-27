@@ -1,4 +1,4 @@
-package a;
+package sid.example;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import a.Main.Gender;
-import a.Main.Occupation;
-import a.Main.RuleName;
+import sid.example.Main.Gender;
+import sid.example.Main.Occupation;
+import sid.example.Main.RuleName;
 import a.grammar.Context;
 
 public class MyContext extends Context 

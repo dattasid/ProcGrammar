@@ -1,4 +1,4 @@
-package a;
+package sid.example;
 
 public class Jewelry
 {

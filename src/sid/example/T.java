@@ -1,4 +1,4 @@
-package a;
+package sid.example;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

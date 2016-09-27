@@ -1,9 +1,9 @@
-package a;
+package sid.example;
 
 import static a.grammar.rule.Rule.*;
-import static a.Main.RuleName.*;
-import static a.Main.Gender.*;
-import static a.Main.Occupation.*;
+import static sid.example.Main.Gender.*;
+import static sid.example.Main.Occupation.*;
+import static sid.example.Main.RuleName.*;
 
 import java.util.Arrays;
 import java.util.Random;
