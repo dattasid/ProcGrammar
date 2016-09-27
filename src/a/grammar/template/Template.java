@@ -311,6 +311,9 @@ public class Template
     
     private static String getCount(int ct, String obj)
     {
+        if (obj.startsWith("the "))
+            return "";
+        
         if (ct == 1)
         {
             if (Plural.isVowel(obj.charAt(0)))
