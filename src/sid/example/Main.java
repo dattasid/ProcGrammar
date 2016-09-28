@@ -66,6 +66,10 @@ public class Main {
   
   WEAPONS, THINGS, ALL_MOTIFS,
   
+  CROWN_MATERIAL, CROWN_GEMS, CROWN_GEM_COUNT,
+  MOTTO_WORD, MOTTO,
+  
+  MAGIC_SYMBOLS, ALCHEMIC_SYMBOL
  }
 
  public static final String JEWELRY = "jewelry";
@@ -145,8 +149,14 @@ public class Main {
    g.rule(RING_SETTING_TYPES)
        .produces(RULE_NONE)
 //       .produces(RING_SETTING)
-       .produces(FANCY_RING_SETTING).weight(ctx->.2+ctx.wealth*5)
+       .produces(FANCY_RING_SETTING).weight(ctx->.1+ctx.wealth*5)
+       .produces(MAGIC_SYMBOLS).weight(ctx->(ctx.occu==MAGICIAN)?2.:0)
        ;
+   
+   g.rule(MAGIC_SYMBOLS).pushNode("magic").produces(ALCHEMIC_SYMBOL).fireMultipleTimes(1, 5);
+   g.rule(ALCHEMIC_SYMBOL).producesOneOf("soul", "spirit", "fire", "air", "water", "earth", "Sol", "Luna",
+           "Venus", "Mars", "Jupiter", "Mercury", "Saturn", "gold", "silver", "copper", "iron", "tin",
+           "mercury", "lead", "sulfur", "zinc", "amalgama", "cinnabar", "vitriol");
    
    g.rule(FANCY_RING_SETTING)
        .pushNode("fancy")
@@ -232,17 +242,40 @@ public class Main {
    g.rule(CROWN)
       .pushNode("jewellery")
       .pushLeaf("type", CROWN)
-      .producesAction(ctx->ctx.addJewelry(CROWN));
+      .producesAction(ctx->ctx.addJewelry(CROWN)).then(CROWN_MATERIAL, CROWN_GEMS, CROWN_GEM_COUNT, MOTTO);
   
+   g.rule(CROWN_MATERIAL).pushNode("material").produces(PRECIOUS_METAL);
+   g.rule(CROWN_GEMS).pushNode("gems").produces(PRECIOUS_G).fireMultipleTimes(2, 5);
+   g.rule(CROWN_GEM_COUNT).pushNode("count").producesRunTimeName(ctx->50+ctx.rand.nextInt(300));//Hack, TODO produce count
+   
+
+   g.rule(MOTTO).pushNode("motto")
+       .produces(MOTTO_WORD).fireMultipleTimes(3, 4)
+       .produces(RULE_NONE);
+   
+   
+   g.rule(MOTTO_WORD).producesOneOf(
+//      "unity", "strength", "courage", "honor", "loyalty", "faith", "excellence", "piety", "duty", "country",
+//      "virtue", "merit", "glory", "bravery", "justice", "nation", "god", "king", "prince", "salvation", "gallantry", "hope",
+//      "valor", /*"valiant",*/ "fortune", "compassion", "steadfastness", "peace", "humility", "righteousness", "obidience",
+//      "progress", "science", "magic", "industry", "knowledge", "nature", "vigilance", "perseverence", "service"
+           
+      "Unity", "Strength", "Courage", "Honor", "Loyalty", "Faith", "Excellence", "Piety", "Duty", "Country",
+      "Virtue", "Merit", "Glory", "Bravery", "Justice", "Nation", "God", "King", "Prince", "Salvation", "Gallantry", "Hope",
+      "Valor", /*"valiant",*/ "Fortune", "Compassion", "Steadfastness", "Peace", "Humility", "Righteousness", "Obidience",
+      "Progress", "Science", "Magic", "Industry", "Knowledge", "Nature", "Vigilance", "Perseverence", "Service"
+           );
+   
    g.rule(CHAIN).pushNode("chain")
              .produces(METAL_CHAIN).weight(ctx->.2+ctx.wealth*.7)
              .produces(STRUNG_BEADS).weight(ctx->.5+(1-ctx.wealth)*.5);
   
    g.rule(METAL_CHAIN).produces(MATERIAL);
+
   
    g.rule(STRUNG_BEADS).pushNode("beads")
                     .produces("bead_gemstone").fireMultipleTimes(ctx->1, ctx->1+ctx.wealth*2).weight(ctx->.2+ctx.wealth*3)
-                    .produces(COMMON_BEADS).fireMultipleTimes(1, 5).weight(ctx->(1.-ctx.wealth));
+                    .produces(COMMON_BEADS).fireMultipleTimes(1, 3).weight(ctx->(1.-ctx.wealth));
   
    g.rule("bead_gemstone").pushNode("gem_bead").produces(GEMSTONE);
    
@@ -257,7 +290,9 @@ public class Main {
    g.rule(PENDANT).pushNode("pendant")
                .produces(RULE_NONE)
                .produces(RING_SETTING).weight(ctx->.2+ctx.wealth)
-               .produces(ENGRAVING);
+               .produces(ENGRAVING)
+               .produces(MAGIC_SYMBOLS).weight(ctx->(ctx.occu==MAGICIAN)?2.:0)
+               ;
   
    g.rule(MATERIAL)
           .pushNode("material")
@@ -272,6 +307,8 @@ public class Main {
   // TODO SYMBOL on the ring instead of gem
                     .produces(GEMSTONE).fireMultipleTimes(ctx->1, ctx->1+ctx.wealth*2)
   ;
+  
+  
   
   g.rule(GEMSTONE)
                    .produces(PRECIOUS_G).weight(ctx->.4+ctx.wealth*.2)
@@ -401,12 +438,18 @@ public class Main {
                      .delegate(CROWN).ifEquals("type", CROWN)
                      .str("Some jewelry $0.");
   
-  g.template(RING).str("The ring is made of #1.#2#4#3").param(1).property("material")
+  g.template(RING).str("The ring is made of #1.#2#4#5#3").param(1).property("material")
                           .param(2).property("").ifExists("setting")
                               .useTemplate(RING_SETTING)
                           .param(3).property("glow").useTemplate(GLOW)
                           .param(4).property("fancy")
-                                    .useTemplate(FANCY_RING_SETTING);
+                                    .useTemplate(FANCY_RING_SETTING)
+                          .param(5).property("").ifExists("magic")
+                                    .useTemplate(MAGIC_SYMBOLS);
+  
+  g.template(MAGIC_SYMBOLS).str(" On it are inscribed the alchemic symbols for #1.")
+          .param(1).property("magic").unique()
+          ;
   
   g.template(FANCY_RING_SETTING).str(" The centerpiece of the ring is #1.#2#3")
           .param(1).property("centerpiece").uniqueCounted()
@@ -461,11 +504,15 @@ public class Main {
 //  
 //  g.template("gem_bead").str("#1").param(1).property("gem_bead");
   
-  g.template(PENDANT).str(" The #3pendant is #1#2.")
+  g.template(PENDANT).str(" The #3pendant is #1#2#4.")
       .param(1).property("").ifExists("setting").useTemplate("pendant_setting")
       .param(2).property("engraving").useTemplate(ENGRAVING)
       .param(3).property("engraving/material").spaceAfter()
+      .param(4).property("").ifExists("magic").useTemplate("pendant_magic_symbols")
       ;
+  
+  g.template("pendant_magic_symbols").str("engraved with alchemical symbols for #1")
+              .param(1).property("magic").unique();
   
   g.template("pendant_setting").str("set with #1")
       .param(1).property("setting").unique().plural()
@@ -496,7 +543,14 @@ public class Main {
   
   g.template("god_head").str("#0-headed ");
   
-  g.template(CROWN).str(""/*"A crown."*/);
+  g.template(CROWN).str("The #1 crown is adorned with #2 #3.#4")
+          .param(1).property("material")
+          .param(2).property("count")
+          .param(3).property("gems").unique().plural()
+          .param(4).property("").ifExists("motto").useTemplate(MOTTO)
+          ;
+  
+  g.template(MOTTO).str(" On it is inscribed the motto \"#1\".").param(1).property("motto").unique().capFirst();
   
   //---------------------------------------------------------------------------------------
   
