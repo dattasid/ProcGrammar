@@ -11,5 +11,6 @@
 
   <!-- Specify the paths for translatable code                    -->
   <source path='a'/>
+  <source path='sid/example'/>
 
 </module>
