@@ -250,7 +250,7 @@ public class Main {
        .produces("common_beads_mat", "common_beads_color");
    
    g.rule("common_beads_mat").pushNode("material")
-       .producesOneOf(WOOD, STONE, ANTLER, "horn", QUILL, SHELL);
+       .producesOneOf(WOOD, STONE, ANTLER, "horn", QUILL, SHELL, "feather", "hide");
    
    g.rule("common_beads_color").pushNode("color").produces(COLOR);
    
@@ -308,7 +308,7 @@ public class Main {
 
   
   g.rule(INFLUENCE_SPHERES).pushNode("sphere")
-      .producesOneOf("harvest", "home", "war", "courage", "river", "sea",
+      .producesOneOf("harvest", "home", "war", "courage", "chivalry", "river", "sea",
                            "mountain", "earth", "love", "passion", "wine", "happiness",
                            "mischief")
   ;
@@ -372,12 +372,14 @@ public class Main {
   
   g.rule(THINGS)
           .produces(WEAPONS)
-          .producesOneOf("castle", "fortress", "tree", "forest", "temple", "river", "mountain", "the sky", "the sea");
+          .producesOneOf("castle", "fortress", "tree", "forest", "temple", "river", "mountain", "the sky", "the sea",
+                  "crown", "star", "the sun", "the moon");// fruit ? king queen courtier? 
                 
   g.rule(ALL_MOTIFS).produces(CREATURE).produces(THINGS);
   
   g.rule("human").producesOneOf("man", "woman");
   g.rule("human_actions").pushNode("action").producesOneOf("farming", "standing", "sitting", "riding", "dancing", "singing", "praying");
+  // riding on what? playing what instruments.
   
   g.rule("human_motif").pushNode("human").produces("human_multi", "human_actions");
   
@@ -406,8 +408,8 @@ public class Main {
                           .param(4).property("fancy")
                                     .useTemplate(FANCY_RING_SETTING);
   
-  g.template(FANCY_RING_SETTING).str(" The centerpiece of the ring is a #1.#2#3")
-          .param(1).property("centerpiece")
+  g.template(FANCY_RING_SETTING).str(" The centerpiece of the ring is #1.#2#3")
+          .param(1).property("centerpiece").uniqueCounted()
           .param(2).property("halo").useTemplate(HALO_DECO)
           .param(3).property("fil_stuff").ifExists("fil_stuff/filigree")
                   .useTemplate(FILIGREE_MILGRAIN)
