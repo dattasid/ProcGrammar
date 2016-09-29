@@ -10,7 +10,7 @@
 
 
   <!-- Specify the paths for translatable code                    -->
-  <source path='a'/>
-  <source path='sid/example'/>
+  <source path='proc'/>
+  <source path='sid/example/jewelry'/>
 
 </module>
