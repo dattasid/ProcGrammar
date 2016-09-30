@@ -58,7 +58,7 @@ g.rule("object")
 ```
 Same as above.
 
-Please note none of the abocve generate any results, how to generate actual objects will be shown in a following section.
+Please note none of the above generate any results, how to generate actual objects will be shown in a following section.
 
 ### Actally generating objects
 
@@ -114,14 +114,14 @@ Simiarly weights can be decided based on context data.
 g.rule("a").produces("b").weight(ctx->ctx.value);
 ```
 
-Note: A consistent object system is TBD. The current object is given by ```ctx.nodes.peek()```, but there are no good ways to access whats in it. It is easy to access fields added by extending the Context class, but the user must take of creating his hierarchy. Using  the pushNode/PushLeaf based object system to make decisions and decide values is TBD.
+Note: A consistent object system is TBD. The current object is given by ```ctx.nodes.peek()```, but there are no good ways to access whats in it. It is easy to access fields added by extending the Context class, but the user must take care of creating his hierarchy. Using  the pushNode/PushLeaf based object system to make decisions and decide values is TBD.
 
 ## Template examples
 
 ```
 g.template("chair").str("A chair, #1 in color and #2 in shape.")
       .param(1).property("color")
-      .param(1).property("shape")
+      .param(2).property("shape")
 ```
 Converts the ```{chair={color="red", shape="round"}}``` to string "A chair, red in color and round in shape."
 Converts the ```{chair={color=["red", "blue], shape="round"}}``` to string "A chair, red and blue in color and round in shape."
